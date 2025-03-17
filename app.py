@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import numpy as np
 import tensorflow as tf
+import requests
 import json
 
 app = FastAPI()
@@ -14,19 +15,27 @@ class PredictionRequest(BaseModel):
     features: list[float]  # Expecting a list of float values
 
 @app.get("/predict")
-def predict(data: PredictionRequest):
-    # Convert input list to NumPy array
-    input_data = np.array(data.features).reshape(1, -1)
+def predict(features: str):
+    # Convert query string into a list of floats
+    try:
+        feature_list = [float(x) for x in features.split(",")]
+    except ValueError:
+        return {"error": "Invalid input format"}
 
-    # Get predictions from LSTM model
-    prediction = model.predict(input_data)
+    # Dummy prediction (replace with your model logic)
+    prediction = sum(feature_list)  # Example: Just summing up the numbers
 
-    # Convert NumPy array to list
-    prediction_list = prediction.tolist()
+    return {"prediction": prediction}
 
-    # Convert to JSON format
-    json_response = json.dumps({"prediction": prediction_list})
 
-    return json_response
+@app.get("/")
+async def home():
+    return {"message": "Welcome to my API"}
 
+
+url = "http://127.0.0.1:8000/predict"
+params = {"features": "0.5,1.2,3.4"}  # Convert list to comma-separated string
+
+response = requests.get(url, params=params)
+print(response.json())
 
